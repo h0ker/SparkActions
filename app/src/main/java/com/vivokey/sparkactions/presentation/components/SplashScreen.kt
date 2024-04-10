@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -48,8 +49,9 @@ fun SplashScreen(onSplashScreenEnd: () -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             Image(
+                modifier = Modifier.fillMaxWidth(),
                 painter = painterResource(id = R.drawable.splash_screen),
-                contentScale = ContentScale.FillBounds,
+                contentScale = ContentScale.Crop,
                 contentDescription = null
             )
             Column(
