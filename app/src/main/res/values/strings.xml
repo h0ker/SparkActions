@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Spark Actions</string>
+    <string name="error_getting_spark_info">There was an error getting your Spark\'s info. Please try again.</string>
+    <string name="error_with_this_action">There was an error with this action.</string>
+    <string name="add_field_desc">Tap the "Add Field" button to share email addresses, phone numbers, and websites.</string>
+    <string name="invalid_number">Invalid phone number, please check your input and try again</string>
+    <string name="invalid_email">Invalid Email, please check your input and try again</string>
+    <string name="invalid_url">Invalid URL, please check your input and try again</string>
+    <string name="nfc_sharing_desc">What contact information do you want to share when someone taps your Spark with their phone?</string>
+    <string name="action_write_failure">There was an error saving your action. Please try again.</string>
+</resources>
