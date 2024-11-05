@@ -7,12 +7,11 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
-import com.carbidecowboy.intra.di.NfcModule
-import com.carbidecowboy.intra.domain.NfcAdapterController
-import com.carbidecowboy.intra.domain.NfcController
-import com.carbidecowboy.intra.domain.NfcViewModel
-import com.carbidecowboy.intra.domain.OperationResult
 import com.google.gson.Gson
+import com.hoker.intra.domain.NfcAdapterController
+import com.hoker.intra.domain.NfcController
+import com.hoker.intra.domain.NfcViewModel
+import com.hoker.intra.domain.OperationResult
 import com.vivokey.sparkactions.R
 import com.vivokey.sparkactions.data.ActionDatabase
 import com.vivokey.sparkactions.domain.models.Action
@@ -32,10 +31,9 @@ import javax.inject.Inject
 @HiltViewModel
 class EditActionViewModel @Inject constructor(
     nfcAdapterController: NfcAdapterController,
-    nfcControllerFactory: NfcModule.NfcControllerFactory,
     private val redirectApiService: RedirectApiService,
     private val actionDatabase: ActionDatabase
-) : NfcViewModel(nfcAdapterController, nfcControllerFactory) {
+) : NfcViewModel(nfcAdapterController) {
 
     private val _initialId: MutableState<String?> = mutableStateOf(null)
     var initialId: String?
@@ -133,46 +131,49 @@ class EditActionViewModel @Inject constructor(
                         val url = String(payload.copyOfRange(1, payload.size))
                         ndef.close()
 
-                        when (val result = nfcController.getVivokeyJwt(tag)) {
-                            is OperationResult.Success -> {
-                                val setRedirectRequest = SetRedirectRequest(
-                                    jwt = result.data,
-                                    title = validAction.title,
-                                    target = validAction.target.toString(),
-                                    delay = _delay.intValue,
-                                    aj = _appendJwt.value,
-                                    url = url
-                                )
+                        nfcController.withConnection(tag) {
+                            when (val result = nfcController.getVivokeyJwt(tag)) {
+                                is OperationResult.Success -> {
+                                    val setRedirectRequest = SetRedirectRequest(
+                                        jwt = result.data,
+                                        title = validAction.title,
+                                        target = validAction.target.toString(),
+                                        delay = _delay.intValue,
+                                        aj = _appendJwt.value,
+                                        url = url
+                                    )
 
-                                val setRedirectRequestJson = Gson().toJson(setRedirectRequest)
+                                    val setRedirectRequestJson = Gson().toJson(setRedirectRequest)
 
-                                val setResult = redirectApiService.setRedirect(setRedirectRequest)
+                                    val setResult =
+                                        redirectApiService.setRedirect(setRedirectRequest)
 
-                                Log.i(
-                                    this@EditActionViewModel::class.toString(),
-                                    setResult.toString()
-                                )
-                                Log.i(
-                                    this@EditActionViewModel::class.toString(),
-                                    setRedirectRequestJson
-                                )
-                                Log.i(
-                                    this@EditActionViewModel::class.toString(),
-                                    setRedirectRequest.toString()
-                                )
+                                    Log.i(
+                                        this@EditActionViewModel::class.toString(),
+                                        setResult.toString()
+                                    )
+                                    Log.i(
+                                        this@EditActionViewModel::class.toString(),
+                                        setRedirectRequestJson
+                                    )
+                                    Log.i(
+                                        this@EditActionViewModel::class.toString(),
+                                        setRedirectRequest.toString()
+                                    )
 
-                                saveAction()
+                                    saveAction()
 
-                                _isLoading.value = false
-                                _readyToWrite.value = false
+                                    _isLoading.value = false
+                                    _readyToWrite.value = false
 
-                                messageChannel.send(-1)
-                            }
+                                    messageChannel.send(-1)
+                                }
 
-                            is OperationResult.Failure -> {
-                                _isLoading.value = false
-                                _readyToWrite.value = false
-                                messageChannel.send(R.string.action_write_failure)
+                                is OperationResult.Failure -> {
+                                    _isLoading.value = false
+                                    _readyToWrite.value = false
+                                    messageChannel.send(R.string.action_write_failure)
+                                }
                             }
                         }
                     }

@@ -4,11 +4,10 @@ import android.nfc.Tag
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
-import com.carbidecowboy.intra.di.NfcModule
-import com.carbidecowboy.intra.domain.NfcAdapterController
-import com.carbidecowboy.intra.domain.NfcController
-import com.carbidecowboy.intra.domain.NfcViewModel
-import com.carbidecowboy.intra.domain.OperationResult
+import com.hoker.intra.domain.NfcAdapterController
+import com.hoker.intra.domain.NfcController
+import com.hoker.intra.domain.NfcViewModel
+import com.hoker.intra.domain.OperationResult
 import com.vivokey.sparkactions.R
 import com.vivokey.sparkactions.data.ActionDatabase
 import com.vivokey.sparkactions.domain.models.Action
@@ -27,10 +26,9 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
     nfcAdapterController: NfcAdapterController,
-    nfcControllerFactory: NfcModule.NfcControllerFactory,
     private val redirectApiService: RedirectApiService,
     private val actionDatabase: ActionDatabase
-): NfcViewModel(nfcAdapterController, nfcControllerFactory) {
+): NfcViewModel(nfcAdapterController) {
 
     companion object {
         const val NEW = "new"
@@ -72,24 +70,28 @@ class HomeScreenViewModel @Inject constructor(
     override fun onNfcTagDiscovered(tag: Tag, nfcController: NfcController) {
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
-            when (val result = nfcController.getVivokeyJwt(tag)) {
-                is OperationResult.Success -> {
-                    val getRedirectRequest = GetRedirectRequest(
-                        jwt = result.data
-                    )
-                    val response = redirectApiService.getRedirect(getRedirectRequest)
-                    _getResult.value = response.body()?.result
-                    if (response.body()?.target != null) {
-                        response.body()?.toAction()?.let {
-                            _currentAction.value = it
+            nfcController.withConnection(tag) {
+                when (val result = nfcController.getVivokeyJwt(tag)) {
+                    is OperationResult.Success -> {
+                        val getRedirectRequest = GetRedirectRequest(
+                            jwt = result.data
+                        )
+                        val response = redirectApiService.getRedirect(getRedirectRequest)
+                        _getResult.value = response.body()?.result
+                        if (response.body()?.target != null) {
+                            response.body()?.toAction()?.let {
+                                _currentAction.value = it
+                            }
+                        } else {
+                            _currentAction.value = null
                         }
-                    } else {
-                        _currentAction.value = null
                     }
-                }
 
-                is OperationResult.Failure -> {
-                    _toastChannel.send(R.string.error_getting_spark_info)
+                    is OperationResult.Failure -> {
+                        val temp = result.exception
+                        println(temp)
+                        _toastChannel.send(R.string.error_getting_spark_info)
+                    }
                 }
             }
             _isLoading.value = false

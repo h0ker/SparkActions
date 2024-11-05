@@ -12,7 +12,7 @@ import androidx.compose.material.icons.filled.Phone
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.carbidecowboy.intra.domain.OperationResult
+import com.hoker.intra.domain.OperationResult
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.net.URLDecoder

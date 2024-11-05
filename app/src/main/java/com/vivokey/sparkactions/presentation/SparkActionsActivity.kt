@@ -9,7 +9,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.carbidecowboy.intra.domain.NfcActivity
+import com.hoker.intra.domain.NfcActivity
 import com.vivokey.sparkactions.domain.models.Action
 import com.vivokey.sparkactions.domain.models.NavRoute
 import com.vivokey.sparkactions.presentation.components.SplashScreen

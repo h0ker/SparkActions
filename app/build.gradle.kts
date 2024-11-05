@@ -7,14 +7,14 @@ plugins {
 
 android {
     namespace = "com.vivokey.sparkactions"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.vivokey.sparkactions"
         minSdk = 28
-        targetSdk = 34
-        versionCode = 12
-        versionName = "1.0.4"
+        targetSdk = 35
+        versionCode = 106
+        versionName = "1.0.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -89,5 +89,5 @@ dependencies {
     annotationProcessor("androidx.room:room-compiler:2.6.0")
     ksp("androidx.room:room-compiler:2.6.0")
     implementation("androidx.room:room-ktx:2.6.0")
-    implementation("com.github.carbidecowboy:intra:1.0.13")
+    implementation("com.github.vivokey:intra:1.3.5")
 }

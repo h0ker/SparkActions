@@ -13,12 +13,11 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.viewModelScope
-import com.carbidecowboy.intra.di.NfcModule
-import com.carbidecowboy.intra.domain.NfcAdapterController
-import com.carbidecowboy.intra.domain.NfcController
-import com.carbidecowboy.intra.domain.NfcViewModel
-import com.carbidecowboy.intra.domain.OperationResult
 import com.google.gson.Gson
+import com.hoker.intra.domain.NfcAdapterController
+import com.hoker.intra.domain.NfcController
+import com.hoker.intra.domain.NfcViewModel
+import com.hoker.intra.domain.OperationResult
 import com.vivokey.sparkactions.data.ActionDatabase
 import com.vivokey.sparkactions.domain.models.Action
 import com.vivokey.sparkactions.domain.models.DigitalCardActionTarget
@@ -29,7 +28,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.InputStream
 import javax.inject.Inject
 import kotlin.math.roundToInt
@@ -37,10 +35,9 @@ import kotlin.math.roundToInt
 @HiltViewModel
 class DigitalCardViewModel @Inject constructor(
     nfcAdapterController: NfcAdapterController,
-    nfcControllerFactory: NfcModule.NfcControllerFactory,
     private val redirectApiService: RedirectApiService,
     private val actionDatabase: ActionDatabase
-): NfcViewModel(nfcAdapterController, nfcControllerFactory) {
+): NfcViewModel(nfcAdapterController) {
 
     private val _digitalCard = mutableStateOf(
         DigitalCardActionTarget()
@@ -298,59 +295,61 @@ class DigitalCardViewModel @Inject constructor(
                     val url = String(payload.copyOfRange(1, payload.size))
                     ndef.close()
 
-                    when (val result = nfcController.getVivokeyJwt(tag)) {
-                        is OperationResult.Success -> {
-                            val targetString = validAction.target.toString()
-                            println(targetString)
-                            val setRedirectRequest = SetRedirectRequest(
-                                jwt = result.data,
-                                title = validAction.title,
-                                target = validAction.target.toString(),
-                                delay = 0,
-                                aj = false,
-                                url = url
-                            )
+                    nfcController.withConnection(tag) {
+                        when (val result = nfcController.getVivokeyJwt(tag)) {
+                            is OperationResult.Success -> {
+                                val targetString = validAction.target.toString()
+                                println(targetString)
+                                val setRedirectRequest = SetRedirectRequest(
+                                    jwt = result.data,
+                                    title = validAction.title,
+                                    target = validAction.target.toString(),
+                                    delay = 0,
+                                    aj = false,
+                                    url = url
+                                )
 
-                            val setRedirectRequestJson = Gson().toJson(setRedirectRequest)
+                                val setRedirectRequestJson = Gson().toJson(setRedirectRequest)
 
-                            val setResult =
-                                redirectApiService.setRedirect(setRedirectRequest)
+                                val setResult =
+                                    redirectApiService.setRedirect(setRedirectRequest)
 
-                            Log.i(
-                                this@DigitalCardViewModel::class.toString(),
-                                setResult.toString()
-                            )
-                            Log.i(
-                                this@DigitalCardViewModel::class.toString(),
-                                setRedirectRequestJson
-                            )
-                            Log.i(
-                                this@DigitalCardViewModel::class.toString(),
-                                setRedirectRequest.toString()
-                            )
+                                Log.i(
+                                    this@DigitalCardViewModel::class.toString(),
+                                    setResult.toString()
+                                )
+                                Log.i(
+                                    this@DigitalCardViewModel::class.toString(),
+                                    setRedirectRequestJson
+                                )
+                                Log.i(
+                                    this@DigitalCardViewModel::class.toString(),
+                                    setRedirectRequest.toString()
+                                )
 
-                            _action.value = Action(
-                                title = validAction.title,
-                                target = validAction.target,
-                                delay = 0,
-                                aj = false
-                            )
+                                _action.value = Action(
+                                    title = validAction.title,
+                                    target = validAction.target,
+                                    delay = 0,
+                                    aj = false
+                                )
 
-                            _action.value?.let { finalAction ->
-                                _initialId.value?.let { id ->
-                                    actionDatabase.actionDao().deleteById(id)
+                                _action.value?.let { finalAction ->
+                                    _initialId.value?.let { id ->
+                                        actionDatabase.actionDao().deleteById(id)
+                                    }
+                                    actionDatabase.actionDao().insertAction(finalAction)
                                 }
-                                actionDatabase.actionDao().insertAction(finalAction)
+
+                                _isLoading.value = false
+                                _readyForWrite.value = false
+
+                                messageChannel.send(-1)
                             }
 
-                            _isLoading.value = false
-                            _readyForWrite.value = false
-
-                            messageChannel.send(-1)
-                        }
-
-                        is OperationResult.Failure -> {
-                            _isLoading.value = false
+                            is OperationResult.Failure -> {
+                                _isLoading.value = false
+                            }
                         }
                     }
                 }
